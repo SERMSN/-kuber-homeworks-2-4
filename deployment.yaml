@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-myapp
+  labels:
+    app: {{ .Release.Name }}-myapp
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-myapp
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-myapp
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: nginx
+        image: "{{ .Values.images.nginx.repository }}:{{ .Values.images.nginx.tag }}"
+        imagePullPolicy: {{ .Values.images.nginx.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.nginx.targetPort }}
+          name: http
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        {{- with .Values.env.nginx }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      - name: multitool
+        image: "{{ .Values.images.multitool.repository }}:{{ .Values.images.multitool.tag }}"
+        imagePullPolicy: {{ .Values.images.multitool.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.multitool.targetPort }}
+          name: http
+        env:
+        - name: HTTP_PORT
+          value: "{{ .Values.env.multitool.HTTP_PORT }}"
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
